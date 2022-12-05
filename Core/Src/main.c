@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "adc.h"
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
@@ -49,6 +50,9 @@
 /* USER CODE BEGIN PV */
 modbusHandler_t ModbusH;
 uint16_t ModbusDATA[8] = {1,2,3,4,5,6,7,8};
+
+char trans_str[64] = {0,};
+volatile uint16_t adc[1] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,6 +65,26 @@ void MX_FREERTOS_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t data[8];
+
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if(hadc->Instance == ADC1) //check if the interrupt comes from ACD1
+    {
+	adc[0] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+	//adc[1] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
+	//snprintf(trans_str, 63, "ADC_INJ %d %d\n", (uint16_t)adc[0], (uint16_t)adc[1]);
+	//HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 1000);
+	adc[0] = 0;
+	//adc[1] = 0;
+	//HAL_ADCEx_InjectedStart_IT(&hadc1);
+    }
+}
+
+void start_Injected(void){
+	HAL_ADCEx_InjectedStart_IT(&hadc1);
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -93,6 +117,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   ModbusH.uModbusType = MB_SLAVE;
   ModbusH.port =  &huart1;
@@ -106,22 +131,17 @@ int main(void)
   ModbusInit(&ModbusH);
   //Start capturing traffic on serial Port
   ModbusStart(&ModbusH);
+
+  HAL_GPIO_WritePin(LedG_GPIO_Port, LedG_Pin, 0);
+  HAL_GPIO_WritePin(LedE_GPIO_Port, LedE_Pin, 1);
+
+  HAL_ADCEx_Calibration_Start(&hadc1);
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
   /* Start scheduler */
-
-  //data[0]=ModbusDATA[1];
-  //data[1]=ModbusDATA[2];
-  if (ee24_isConnected()){
-	 // ee24_write(0, data, 8, 1000);
-        ee24_read(0, data, 8, 1000);
-      }
-  //ee24_
-
-
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
@@ -145,6 +165,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -173,32 +194,17 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
- /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM4 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM4) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.

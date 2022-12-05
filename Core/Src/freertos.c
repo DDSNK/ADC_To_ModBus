@@ -62,6 +62,13 @@ const osThreadAttr_t myTaskSlave_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
+/* Definitions for myTaskLEDs */
+osThreadId_t myTaskLEDsHandle;
+const osThreadAttr_t myTaskLEDs_attributes = {
+  .name = "myTaskLEDs",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -70,6 +77,7 @@ const osThreadAttr_t myTaskSlave_attributes = {
 
 void StartDefaultTask(void *argument);
 void StartTaskSlave(void *argument);
+void StartTaskLEDs(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -105,6 +113,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of myTaskSlave */
   myTaskSlaveHandle = osThreadNew(StartTaskSlave, NULL, &myTaskSlave_attributes);
+
+  /* creation of myTaskLEDs */
+  myTaskLEDsHandle = osThreadNew(StartTaskLEDs, NULL, &myTaskLEDs_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -157,6 +168,27 @@ void StartTaskSlave(void *argument)
 	  osDelay(200);
   }
   /* USER CODE END StartTaskSlave */
+}
+
+/* USER CODE BEGIN Header_StartTaskLEDs */
+/**
+* @brief Function implementing the myTaskLEDs thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskLEDs */
+void StartTaskLEDs(void *argument)
+{
+  /* USER CODE BEGIN StartTaskLEDs */
+  /* Infinite loop */
+  for(;;)
+  {
+	  HAL_GPIO_TogglePin(LedG_GPIO_Port, LedG_Pin);
+	  HAL_GPIO_TogglePin(LedE_GPIO_Port, LedE_Pin);
+	  start_Injected();
+    osDelay(1000);
+  }
+  /* USER CODE END StartTaskLEDs */
 }
 
 /* Private application code --------------------------------------------------*/
