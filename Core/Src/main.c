@@ -49,10 +49,11 @@
 
 /* USER CODE BEGIN PV */
 modbusHandler_t ModbusH;
-uint16_t ModbusDATA[8] = {1,2,3,4,5,6,7,8};
+uint16_t ModbusDATA[8] = {17,0,0,0,123,6,7,8};
 
 char trans_str[64] = {0,};
-volatile uint16_t adc[1] = {0};
+volatile uint16_t adc;
+volatile float adc_float;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,19 +65,21 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t data[8];
+//uint8_t data[8];
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if(hadc->Instance == ADC1) //check if the interrupt comes from ACD1
     {
-	adc[0] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
-	//adc[1] = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
-	//snprintf(trans_str, 63, "ADC_INJ %d %d\n", (uint16_t)adc[0], (uint16_t)adc[1]);
-	//HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 1000);
-	adc[0] = 0;
-	//adc[1] = 0;
-	//HAL_ADCEx_InjectedStart_IT(&hadc1);
+
+    adc = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+    ModbusDATA[1]= adc;
+    adc_float = (float) (adc+.0) / ModbusDATA[4];
+
+    ModbusDATA[2]= (uint16_t)adc_float;
+    ModbusDATA[3]= (uint16_t)((adc_float-ModbusDATA[2])*100);
+	adc = 0;
+	adc_float = 0;
     }
 }
 

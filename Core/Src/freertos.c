@@ -46,7 +46,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osSemaphoreId_t LedsSphrHandle;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -78,6 +78,7 @@ const osThreadAttr_t myTaskLEDs_attributes = {
 void StartDefaultTask(void *argument);
 void StartTaskSlave(void *argument);
 void StartTaskLEDs(void *argument);
+void start_Injected(void);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -183,9 +184,12 @@ void StartTaskLEDs(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  //xSemaphoreTake(LedsSphrHandle,100);
 	  HAL_GPIO_TogglePin(LedG_GPIO_Port, LedG_Pin);
 	  HAL_GPIO_TogglePin(LedE_GPIO_Port, LedE_Pin);
+	  //ModbusDATA[2]=ModbusDATA[1]/ModbusDATA[4];
 	  start_Injected();
+	  //xSemaphoreGive(LedsSphrHandle);
     osDelay(1000);
   }
   /* USER CODE END StartTaskLEDs */
