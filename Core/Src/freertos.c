@@ -78,7 +78,6 @@ const osThreadAttr_t myTaskLEDs_attributes = {
 void StartDefaultTask(void *argument);
 void StartTaskSlave(void *argument);
 void StartTaskLEDs(void *argument);
-void start_Injected(void);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 

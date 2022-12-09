@@ -69,7 +69,7 @@ void Error_Handler(void);
 #define LedE_Pin GPIO_PIN_13
 #define LedE_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+void start_Injected(void);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
